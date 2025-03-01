@@ -1,23 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "Readwise Reader Importer",
+  "name": "Readwise Reader ImporterBETA",
   "version": "1.0.0",
-  "description": "Import multiple URLs from a page like YouTube playlist to Readwise.",
+  "description": "Import multiple URLs from a page like YouTube playlist to Readwise. THIS EXTENSION IS FOR BETA TESTING.",
   "action": {
     "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    },
     "default_title": "Readwise Reader Importer"
   },
   "icons": {
-    "16": "icons/icon16.png",
-    "32": "icons/icon32.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "images/icon-16.png",
+    "32": "images/icon-32.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
   },
   "permissions": [
     "storage",
@@ -48,8 +42,7 @@
         "playlist.html",
         "styles.css",
         "dist/*.js",
-        "images/*",
-        "icons/*"
+        "images/*"
       ],
       "matches": [
         "<all_urls>"
