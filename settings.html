@@ -1,10 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Extension Settings</title>
-    <link rel="stylesheet" href="styles.css" />
-    <style>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Extension Settings</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
       .settings-container {
         max-width: 500px;
         margin: 0 auto;
@@ -56,28 +56,24 @@
         background-color: #f8d7da;
         color: #721c24;
       }
-    </style>
-  </head>
-  <body>
-    <div class="settings-container">
-      <h1>Extension Settings</h1>
-      <p>
-        Configure your API settings below. Your API key is stored securely using
-        Chrome's storage API.
-      </p>
-      <form id="settings-form">
-        <div class="form-group">
-          <label for="api-key">API Key:</label>
-          <input type="text" id="api-key" placeholder="Enter your API key" />
+        </style>
+    </head>
+    <body>
+        <div class="settings-container">
+            <h1>Extension Settings</h1>
+            <p>
+                Enter your Readwise API key below. You can get your API key from
+                <a target="_blank" href="https://readwise.io/access_token">here</a>.
+            </p>
+            <form id="settings-form">
+                <div class="form-group">
+                    <label for="api-key">API Key:</label>
+                    <input type="password" id="api-key" placeholder="Enter your API key" />
+                </div>
+                <button type="submit" class="btn">Save Settings</button>
+            </form>
+            <div id="status-message" class="status-message" style="display: none"></div>
         </div>
-        <button type="submit" class="btn">Save Settings</button>
-      </form>
-      <div
-        id="status-message"
-        class="status-message"
-        style="display: none"
-      ></div>
-    </div>
-    <script src="dist/settings.js"></script>
-  </body>
+        <script src="dist/settings.js"></script>
+    </body>
 </html>

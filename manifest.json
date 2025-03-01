@@ -16,26 +16,14 @@
   "permissions": [
     "storage",
     "activeTab",
-    "tabs"
+    "tabs",
+    "scripting"
   ],
   "options_page": "settings.html",
   "host_permissions": [
-    "*://*.youtube.com/*"
+    "*://*.youtube.com/*",
+    "https://www.youtube.com/*"
   ],
-  "content_scripts": [
-    {
-      "matches": [
-        "*://*.youtube.com/*"
-      ],
-      "js": [
-        "dist/contentScript.js"
-      ],
-      "run_at": "document_idle"
-    }
-  ],
-  "background": {
-    "service_worker": "dist/background.js"
-  },
   "web_accessible_resources": [
     {
       "resources": [

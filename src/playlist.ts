@@ -13,11 +13,76 @@ let downloadBtn: HTMLButtonElement;
 let openAllBtn: HTMLButtonElement;
 let saveTextBtn: HTMLButtonElement;
 let saveToReadwiseBtn: HTMLButtonElement;
+let extractBtn: HTMLButtonElement;
 let statusMessage: HTMLDivElement;
 let tabs: NodeListOf<Element>;
 let tabContents: NodeListOf<Element>;
 
 let playlistData: PlaylistData | null = null;
+
+// YouTube video extraction functions
+function isYouTubePlaylist(): boolean {
+  return window.location.href.includes('youtube.com/playlist') ||
+    (window.location.href.includes('youtube.com/watch') && window.location.href.includes('list='));
+}
+
+function extractPlaylistVideos(): Promise<string[]> {
+  console.log('YouTube Playlist Extractor: Starting video extraction process');
+
+  return new Promise((resolve) => {
+    function getVideoURLs(): string[] {
+      const videoElements = document.querySelectorAll('a#video-title');
+      return Array.from(videoElements).map(video => {
+        try {
+          const url = new URL((video as HTMLAnchorElement).href);
+          const videoId = url.searchParams.get('v');
+          return videoId ? `https://www.youtube.com/watch?v=${videoId}` : '';
+        } catch (e) {
+          console.error('Error parsing URL:', e);
+          return '';
+        }
+      }).filter(url => url && url.includes('v='));
+    }
+
+    let videoUrls = getVideoURLs();
+
+    if (videoUrls.length === 0) {
+      console.log('No videos found with primary method, trying fallback methods...');
+
+      const videoElements = document.querySelectorAll('a.yt-simple-endpoint.style-scope.ytd-playlist-video-renderer');
+      videoElements.forEach((element: Element) => {
+        const href = (element as HTMLAnchorElement).href;
+        if (href && href.includes('watch?v=')) {
+          videoUrls.push(href);
+        }
+      });
+
+      if (videoUrls.length === 0) {
+        const watchElements = document.querySelectorAll('a.yt-simple-endpoint.style-scope.ytd-compact-video-renderer');
+        watchElements.forEach((element: Element) => {
+          const href = (element as HTMLAnchorElement).href;
+          if (href && href.includes('watch?v=')) {
+            videoUrls.push(href);
+          }
+        });
+      }
+
+      if (videoUrls.length === 0) {
+        const allLinks = document.querySelectorAll('a');
+        allLinks.forEach((link: HTMLAnchorElement) => {
+          if (link.href && link.href.includes('youtube.com/watch?v=')) {
+            videoUrls.push(link.href);
+          }
+        });
+      }
+    }
+
+    videoUrls = [...new Set(videoUrls)];
+    console.log(`Found ${videoUrls.length} videos in playlist`);
+
+    resolve(videoUrls);
+  });
+}
 
 function init(): void {
   console.log('Playlist editor page loaded');
@@ -31,6 +96,7 @@ function init(): void {
   openAllBtn = document.getElementById('open-all-btn') as HTMLButtonElement;
   saveTextBtn = document.getElementById('save-text-btn') as HTMLButtonElement;
   saveToReadwiseBtn = document.getElementById('save-to-readwise-btn') as HTMLButtonElement;
+  extractBtn = document.getElementById('extract-btn') as HTMLButtonElement;
   statusMessage = document.getElementById('status-message') as HTMLDivElement;
   tabs = document.querySelectorAll('.tab');
   tabContents = document.querySelectorAll('.tab-content');
@@ -176,9 +242,6 @@ function setupEventListeners(): void {
     }
 
     navigator.clipboard.writeText(text)
-      .then(() => {
-        showStatus('Text copied to clipboard', 'success');
-      })
       .catch((err) => {
         console.error('Failed to copy text:', err);
         showStatus('Failed to copy text', 'error');
@@ -240,6 +303,41 @@ function setupEventListeners(): void {
     displayPlaylistData();
   });
 
+  if (extractBtn) {
+    extractBtn.addEventListener('click', async () => {
+      console.log('Extract button clicked');
+
+      if (!window.location.hostname.includes('youtube.com') || !isYouTubePlaylist()) {
+        showStatus('Not on a YouTube playlist page', 'error');
+        return;
+      }
+
+      showStatus('Extracting videos from playlist...', 'success');
+
+      try {
+        const videoUrls = await extractPlaylistVideos();
+
+        if (videoUrls.length > 0) {
+          playlistData = {
+            videoUrls: videoUrls,
+            playlistTitle: document.title,
+            timestamp: new Date().toISOString()
+          };
+
+          savePlaylistData();
+          displayPlaylistData();
+
+          showStatus(`Successfully extracted ${videoUrls.length} videos!`, 'success');
+        } else {
+          showStatus('No videos found in this playlist', 'error');
+        }
+      } catch (error) {
+        console.error('Error extracting videos:', error);
+        showStatus('Error extracting videos', 'error');
+      }
+    });
+  }
+
   saveToReadwiseBtn.addEventListener('click', () => {
     console.log('Save to Readwise button clicked');
 
@@ -295,6 +393,7 @@ function setupEventListeners(): void {
 async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> {
   let successCount = 0;
   let failureCount = 0;
+  let errorDetails = [];
   console.log(`Starting to send ${urls.length} URLs to Readwise`);
 
   const readwiseBtn = document.getElementById('save-to-readwise-btn') as HTMLButtonElement;
@@ -313,6 +412,20 @@ async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> 
     loadingText.className = 'loading-text';
     readwiseBtn.appendChild(loadingText);
   }
+
+  // Create or get error container
+  let errorContainer = document.getElementById('readwise-error-container');
+  if (!errorContainer) {
+    errorContainer = document.createElement('div');
+    errorContainer.id = 'readwise-error-container';
+    errorContainer.style.color = 'red';
+    errorContainer.style.marginTop = '10px';
+    errorContainer.style.display = 'none';
+    readwiseBtn.parentNode?.insertBefore(errorContainer, readwiseBtn.nextSibling);
+  }
+
+  // Now errorContainer is guaranteed to be non-null
+  const errorContainerElement = errorContainer as HTMLDivElement;
 
   readwiseBtn.disabled = true;
 
@@ -361,7 +474,9 @@ async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> 
         updateProgress(successCount, urls.length);
       } else {
         failureCount++;
-        console.error(`Failed to save URL: ${url}, Status: ${response.status}`);
+        const errorMsg = `Failed to save URL: ${url}, Status: ${response.status}, Response: ${responseText}`;
+        console.error(errorMsg);
+        errorDetails.push(errorMsg);
 
         if (response.status === 429) {
           const retryAfter = parseInt(response.headers.get('Retry-After') || '60');
@@ -387,6 +502,7 @@ async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> 
       console.error('Error sending URL to Readwise:', error);
       console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
       failureCount++;
+      errorDetails.push(`Error with URL ${url}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -406,8 +522,23 @@ async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> 
 
   if (failureCount === 0) {
     showStatus(`Successfully sent all ${successCount} URLs to Readwise!`, 'success');
+    errorContainerElement.style.display = 'none';
   } else {
     showStatus(`Sent ${successCount} URLs to Readwise with ${failureCount} failures.`, 'error');
+    
+    // Display detailed error information
+    errorContainerElement.innerHTML = `<strong>Errors (${failureCount}):</strong><br>`;
+    errorDetails.forEach((error, i) => {
+      if (i < 5) { // Show only first 5 errors to avoid overwhelming the UI
+        errorContainerElement.innerHTML += `${error}<br>`;
+      }
+    });
+    
+    if (errorDetails.length > 5) {
+      errorContainerElement.innerHTML += `<em>...and ${errorDetails.length - 5} more errors. Check console for details.</em>`;
+    }
+    
+    errorContainerElement.style.display = 'block';
   }
 }
 
@@ -427,4 +558,11 @@ function showStatus(message: string, type: 'success' | 'error'): void {
   }, 5000);
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// Initialize the page
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    init();
+  });
+} else {
+  init();
+}
