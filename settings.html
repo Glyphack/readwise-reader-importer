@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Extension Settings</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .settings-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .btn {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        background-color: #3367d6;
+      }
+
+      .status-message {
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 4px;
+      }
+
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="settings-container">
+      <h1>Extension Settings</h1>
+      <p>
+        Configure your API settings below. Your API key is stored securely using
+        Chrome's storage API.
+      </p>
+      <form id="settings-form">
+        <div class="form-group">
+          <label for="api-key">API Key:</label>
+          <input type="text" id="api-key" placeholder="Enter your API key" />
+        </div>
+        <button type="submit" class="btn">Save Settings</button>
+      </form>
+      <div
+        id="status-message"
+        class="status-message"
+        style="display: none"
+      ></div>
+    </div>
+    <script src="dist/settings.js"></script>
+  </body>
+</html>

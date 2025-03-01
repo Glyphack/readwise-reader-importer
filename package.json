@@ -1,0 +1,16 @@
+{
+  "name": "readwise-reader-importer",
+  "version": "1.0.0",
+  "description": "A Chrome extension to import content to Readwise reader",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "package": "npm run build && npm run zip",
+    "zip": "mkdir -p dist && zip -r dist/readwise-reader-importer.zip manifest.json icons *.html *.js *.css"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.306",
+    "typescript": "^4.9.5"
+  }
+}

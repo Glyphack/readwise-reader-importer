@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "Readwise Reader Importer",
+  "version": "1.0.0",
+  "description": "Import multiple URLs from a page like YouTube playlist to Readwise.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Readwise Reader Importer"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "options_page": "settings.html",
+  "host_permissions": [
+    "*://*.youtube.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "dist/contentScript.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "dist/background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "playlist.html",
+        "styles.css",
+        "dist/*.js",
+        "images/*",
+        "icons/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}

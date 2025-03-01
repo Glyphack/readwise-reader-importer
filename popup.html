@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Simple TypeScript Extension</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Readwise Reader Importer</h1>
+      <button id="playlist-editor-btn" class="settings-btn">Save</button>
+      <div class="feature-description">
+        <p>Visit a YouTube playlist page to see the extract button.</p>
+      </div>
+      <div class="status-indicator">
+        <div id="api-status-dot" class="status-dot inactive"></div>
+        <span id="api-status-text">API Key: Not configured</span>
+      </div>
+      <button id="settings-btn" class="btn">Open Settings</button>
+    </div>
+    <script src="dist/popup.js"></script>
+  </body>
+</html>
