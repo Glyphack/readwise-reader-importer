@@ -7,7 +7,7 @@
     "watch": "tsc --watch",
     "clean": "rm -rf dist",
     "package": "npm run build && npm run zip",
-    "zip": "mkdir -p dist && zip -r dist/readwise-reader-importer.zip manifest.json icons *.html *.js *.css"
+    "zip": "mkdir -p dist && zip -r dist/readwise-reader-importer.zip manifest.json images dist/*.js *.html *.css"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.306",

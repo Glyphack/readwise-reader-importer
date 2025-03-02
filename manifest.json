@@ -16,14 +16,9 @@
   "permissions": [
     "storage",
     "activeTab",
-    "tabs",
     "scripting"
   ],
   "options_page": "settings.html",
-  "host_permissions": [
-    "*://*.youtube.com/*",
-    "https://www.youtube.com/*"
-  ],
   "web_accessible_resources": [
     {
       "resources": [
