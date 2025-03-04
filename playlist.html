@@ -217,7 +217,6 @@
       </div>
       <div class="tabs">
         <div class="tab active" data-tab="list-view">List View</div>
-        <div class="tab" data-tab="text-view">Text View</div>
       </div>
       <div class="tab-content active" id="list-view">
         <div class="actions">
@@ -226,6 +225,13 @@
           <button id="open-all-btn" class="secondary">
             Open All (Warning: Opens many tabs)
           </button>
+          <label for="location">Save to:</label>
+          <select id="location">
+              <option value="new" selected>New</option>
+              <option value="later">Later</option>
+              <option value="archive">Archive</option>
+              <option value="feed">Feed</option>
+          </select>
           <button id="save-to-readwise-btn" class="readwise">
             Save to Readwise
           </button>
@@ -233,17 +239,6 @@
         <div class="video-list" id="video-list">
           <p>Loading videos...</p>
         </div>
-      </div>
-      <div class="tab-content" id="text-view">
-        <div class="actions">
-          <button id="copy-text-btn">Copy Text</button>
-          <button id="save-text-btn">Save Changes</button>
-        </div>
-        <textarea
-          id="urls-textarea"
-          placeholder="Video URLs will appear here..."
-        ></textarea>
-        <div id="status-message" class="status" style="display: none"></div>
       </div>
     </div>
     <script src="dist/playlist.js"></script>

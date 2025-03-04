@@ -1,107 +1,49 @@
 interface PlaylistData {
-  videoUrls: string[];
+  videos: Video[];
+  author: string | null;
   playlistTitle: string;
   timestamp: string;
 }
 
+class Video {
+  title: string;
+  url: string;
+  constructor(title: string, url: string) {
+    this.title = title;
+    this.url = url;
+  }
+}
+
 let playlistInfoElement: HTMLParagraphElement;
 let videoListElement: HTMLDivElement;
-let urlsTextarea: HTMLTextAreaElement;
 let copyAllBtn: HTMLButtonElement;
-let copyTextBtn: HTMLButtonElement;
 let downloadBtn: HTMLButtonElement;
 let openAllBtn: HTMLButtonElement;
-let saveTextBtn: HTMLButtonElement;
 let saveToReadwiseBtn: HTMLButtonElement;
 let extractBtn: HTMLButtonElement;
 let statusMessage: HTMLDivElement;
 let tabs: NodeListOf<Element>;
 let tabContents: NodeListOf<Element>;
+let locationDropDown: HTMLSelectElement;
 
-let playlistData: PlaylistData | null = null;
-
-// YouTube video extraction functions
-function isYouTubePlaylist(): boolean {
-  return window.location.href.includes('youtube.com/playlist') ||
-    (window.location.href.includes('youtube.com/watch') && window.location.href.includes('list='));
-}
-
-function extractPlaylistVideos(): Promise<string[]> {
-  console.log('YouTube Playlist Extractor: Starting video extraction process');
-
-  return new Promise((resolve) => {
-    function getVideoURLs(): string[] {
-      const videoElements = document.querySelectorAll('a#video-title');
-      return Array.from(videoElements).map(video => {
-        try {
-          const url = new URL((video as HTMLAnchorElement).href);
-          const videoId = url.searchParams.get('v');
-          return videoId ? `https://www.youtube.com/watch?v=${videoId}` : '';
-        } catch (e) {
-          console.error('Error parsing URL:', e);
-          return '';
-        }
-      }).filter(url => url && url.includes('v='));
-    }
-
-    let videoUrls = getVideoURLs();
-
-    if (videoUrls.length === 0) {
-      console.log('No videos found with primary method, trying fallback methods...');
-
-      const videoElements = document.querySelectorAll('a.yt-simple-endpoint.style-scope.ytd-playlist-video-renderer');
-      videoElements.forEach((element: Element) => {
-        const href = (element as HTMLAnchorElement).href;
-        if (href && href.includes('watch?v=')) {
-          videoUrls.push(href);
-        }
-      });
-
-      if (videoUrls.length === 0) {
-        const watchElements = document.querySelectorAll('a.yt-simple-endpoint.style-scope.ytd-compact-video-renderer');
-        watchElements.forEach((element: Element) => {
-          const href = (element as HTMLAnchorElement).href;
-          if (href && href.includes('watch?v=')) {
-            videoUrls.push(href);
-          }
-        });
-      }
-
-      if (videoUrls.length === 0) {
-        const allLinks = document.querySelectorAll('a');
-        allLinks.forEach((link: HTMLAnchorElement) => {
-          if (link.href && link.href.includes('youtube.com/watch?v=')) {
-            videoUrls.push(link.href);
-          }
-        });
-      }
-    }
-
-    videoUrls = [...new Set(videoUrls)];
-    console.log(`Found ${videoUrls.length} videos in playlist`);
-
-    resolve(videoUrls);
-  });
-}
+let playlistData: PlaylistData;
 
 function init(): void {
   console.log('Playlist editor page loaded');
 
   playlistInfoElement = document.getElementById('playlist-info') as HTMLParagraphElement;
   videoListElement = document.getElementById('video-list') as HTMLDivElement;
-  urlsTextarea = document.getElementById('urls-textarea') as HTMLTextAreaElement;
   copyAllBtn = document.getElementById('copy-all-btn') as HTMLButtonElement;
-  copyTextBtn = document.getElementById('copy-text-btn') as HTMLButtonElement;
   downloadBtn = document.getElementById('download-btn') as HTMLButtonElement;
   openAllBtn = document.getElementById('open-all-btn') as HTMLButtonElement;
-  saveTextBtn = document.getElementById('save-text-btn') as HTMLButtonElement;
   saveToReadwiseBtn = document.getElementById('save-to-readwise-btn') as HTMLButtonElement;
   extractBtn = document.getElementById('extract-btn') as HTMLButtonElement;
   statusMessage = document.getElementById('status-message') as HTMLDivElement;
   tabs = document.querySelectorAll('.tab');
   tabContents = document.querySelectorAll('.tab-content');
+  locationDropDown = document.getElementById('location') as HTMLSelectElement;
 
-  if (!playlistInfoElement || !videoListElement || !urlsTextarea) {
+  if (!playlistInfoElement || !videoListElement) {
     console.error('Required DOM elements not found');
     return;
   }
@@ -120,7 +62,10 @@ function init(): void {
       } else {
         playlistInfoElement.textContent = 'No playlist data found. Please extract a playlist first.';
         videoListElement.innerHTML = '<p>No videos available.</p>';
-        urlsTextarea.value = '';
+      }
+
+      if (playlistData == null) {
+        showStatus('No playlist data found. Please try again.', 'error');
       }
     });
   } catch (error) {
@@ -135,11 +80,16 @@ function displayPlaylistData(): void {
   if (!playlistData) return;
 
   const date = new Date(playlistData.timestamp);
-  playlistInfoElement.textContent = `Playlist: ${playlistData.playlistTitle} | ${playlistData.videoUrls.length} videos | Extracted: ${date.toLocaleString()}`;
+  playlistInfoElement.textContent = `Playlist: ${playlistData.playlistTitle} | ${playlistData.videos.length} videos`
+
+  if (playlistData.author) {
+    playlistInfoElement.textContent += `| by ${playlistData.author} `;
+  }
+
+  playlistInfoElement.textContent += `| Extracted: ${date.toLocaleString()} `;
 
   displayVideoList();
 
-  urlsTextarea.value = playlistData.videoUrls.join('\n');
 }
 
 function displayVideoList(): void {
@@ -147,32 +97,53 @@ function displayVideoList(): void {
 
   videoListElement.innerHTML = '';
 
-  if (playlistData.videoUrls.length === 0) {
+  if (playlistData.videos.length === 0) {
     videoListElement.innerHTML = '<p>No videos in this playlist.</p>';
     return;
   }
 
-  playlistData.videoUrls.forEach((url, index) => {
+  playlistData.videos.forEach((video, index) => {
     const videoItem = document.createElement('div');
     videoItem.className = 'video-item';
 
     const link = document.createElement('a');
-    link.href = url;
-    link.textContent = url;
+    link.href = video.url;
+    link.textContent = video.title;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
+
+    videoItem.appendChild(link);
+
+    if (index > 0) {
+      const upBtn = document.createElement('button');
+      upBtn.textContent = '⬆';
+      upBtn.dataset.index = index.toString();
+      upBtn.addEventListener('click', () => {
+        [playlistData.videos[index], playlistData.videos[index - 1]] = [playlistData.videos[index - 1], playlistData.videos[index]];
+        displayVideoList();
+      });
+      videoItem.appendChild(upBtn);
+    }
+
+    if (index < playlistData.videos.length - 1) {
+      const downBtn = document.createElement('button');
+      downBtn.textContent = '⬇';
+      downBtn.dataset.index = index.toString();
+      downBtn.addEventListener('click', () => {
+        [playlistData.videos[index], playlistData.videos[index + 1]] = [playlistData.videos[index + 1], playlistData.videos[index]];
+        displayVideoList();
+      });
+      videoItem.appendChild(downBtn);
+    }
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'remove-btn';
     removeBtn.textContent = 'Remove';
     removeBtn.dataset.index = index.toString();
-    removeBtn.addEventListener('click', (e) => {
-      const target = e.target as HTMLButtonElement;
-      const index = parseInt(target.dataset.index || '0');
+    removeBtn.addEventListener('click', () => {
       removeVideo(index);
     });
 
-    videoItem.appendChild(link);
     videoItem.appendChild(removeBtn);
 
     videoListElement.appendChild(videoItem);
@@ -182,7 +153,7 @@ function displayVideoList(): void {
 function removeVideo(index: number): void {
   if (!playlistData) return;
 
-  playlistData.videoUrls.splice(index, 1);
+  playlistData.videos.splice(index, 1);
 
   displayPlaylistData();
 
@@ -212,18 +183,21 @@ function savePlaylistData(): void {
 }
 
 function setupEventListeners(): void {
-  if (!copyAllBtn || !copyTextBtn || !downloadBtn || !openAllBtn || !saveTextBtn || !saveToReadwiseBtn) {
+  if (!copyAllBtn || !downloadBtn || !openAllBtn || !saveToReadwiseBtn) {
     console.error('Button elements not found');
     return;
   }
 
   copyAllBtn.addEventListener('click', () => {
-    if (!playlistData || playlistData.videoUrls.length === 0) {
+    if (!playlistData || playlistData.videos.length === 0) {
       showStatus('No URLs to copy', 'error');
       return;
     }
 
-    const text = playlistData.videoUrls.join('\n');
+    let text = "";
+    for (const video of playlistData.videos) {
+      text += `${video.url}\n`;
+    }
     navigator.clipboard.writeText(text)
       .then(() => {
         showStatus('All URLs copied to clipboard', 'success');
@@ -234,27 +208,13 @@ function setupEventListeners(): void {
       });
   });
 
-  copyTextBtn.addEventListener('click', () => {
-    const text = urlsTextarea.value;
-    if (!text) {
-      showStatus('No text to copy', 'error');
-      return;
-    }
-
-    navigator.clipboard.writeText(text)
-      .catch((err) => {
-        console.error('Failed to copy text:', err);
-        showStatus('Failed to copy text', 'error');
-      });
-  });
-
   downloadBtn.addEventListener('click', () => {
-    if (!playlistData || playlistData.videoUrls.length === 0) {
+    if (!playlistData || playlistData.videos.length === 0) {
       showStatus('No URLs to download', 'error');
       return;
     }
 
-    const text = playlistData.videoUrls.join('\n');
+    const text = playlistData.videos.join('\n');
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
 
@@ -268,80 +228,26 @@ function setupEventListeners(): void {
   });
 
   openAllBtn.addEventListener('click', () => {
-    if (!playlistData || playlistData.videoUrls.length === 0) {
+    if (!playlistData || playlistData.videos.length === 0) {
       showStatus('No URLs to open', 'error');
       return;
     }
 
-    if (playlistData.videoUrls.length > 10) {
-      if (!confirm(`Are you sure you want to open ${playlistData.videoUrls.length} tabs?`)) {
+    if (playlistData.videos.length > 10) {
+      if (!confirm(`Are you sure you want to open ${playlistData.videos.length} tabs ? `)) {
         return;
       }
     }
 
-    playlistData.videoUrls.forEach((url) => {
-      window.open(url, '_blank');
+    playlistData.videos.forEach((video) => {
+      window.open(video.url, '_blank');
     });
   });
-
-  saveTextBtn.addEventListener('click', () => {
-    const text = urlsTextarea.value;
-    const urls = text.split('\n').filter(url => url.trim() !== '');
-
-    if (!playlistData) {
-      playlistData = {
-        videoUrls: urls,
-        playlistTitle: 'Custom Playlist',
-        timestamp: new Date().toISOString()
-      };
-    } else {
-      playlistData.videoUrls = urls;
-      playlistData.timestamp = new Date().toISOString();
-    }
-
-    savePlaylistData();
-    displayPlaylistData();
-  });
-
-  if (extractBtn) {
-    extractBtn.addEventListener('click', async () => {
-      console.log('Extract button clicked');
-
-      if (!window.location.hostname.includes('youtube.com') || !isYouTubePlaylist()) {
-        showStatus('Not on a YouTube playlist page', 'error');
-        return;
-      }
-
-      showStatus('Extracting videos from playlist...', 'success');
-
-      try {
-        const videoUrls = await extractPlaylistVideos();
-
-        if (videoUrls.length > 0) {
-          playlistData = {
-            videoUrls: videoUrls,
-            playlistTitle: document.title,
-            timestamp: new Date().toISOString()
-          };
-
-          savePlaylistData();
-          displayPlaylistData();
-
-          showStatus(`Successfully extracted ${videoUrls.length} videos!`, 'success');
-        } else {
-          showStatus('No videos found in this playlist', 'error');
-        }
-      } catch (error) {
-        console.error('Error extracting videos:', error);
-        showStatus('Error extracting videos', 'error');
-      }
-    });
-  }
 
   saveToReadwiseBtn.addEventListener('click', () => {
     console.log('Save to Readwise button clicked');
 
-    if (!playlistData || playlistData.videoUrls.length === 0) {
+    if (!playlistData || playlistData.videos.length === 0) {
       showStatus('No URLs to save to Readwise', 'error');
       console.log('No playlist data or empty video URLs array', playlistData);
       return;
@@ -367,9 +273,9 @@ function setupEventListeners(): void {
       }
 
       showStatus('Sending URLs to Readwise...', 'success');
-      console.log(`Preparing to send ${playlistData!.videoUrls.length} URLs to Readwise`);
+      console.log(`Preparing to send ${playlistData!.videos.length} URLs to Readwise`);
 
-      sendUrlsToReadwise(playlistData!.videoUrls, token);
+      sendUrlsToReadwise(playlistData, token);
     });
   });
 
@@ -390,10 +296,11 @@ function setupEventListeners(): void {
   });
 }
 
-async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> {
+async function sendUrlsToReadwise(playlistData: PlaylistData, token: string): Promise<void> {
   let successCount = 0;
   let failureCount = 0;
   let errorDetails = [];
+  const urls = playlistData.videos.map(video => video.url);
   console.log(`Starting to send ${urls.length} URLs to Readwise`);
 
   const readwiseBtn = document.getElementById('save-to-readwise-btn') as HTMLButtonElement;
@@ -431,8 +338,8 @@ async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> 
 
   const updateProgress = (current: number, total: number) => {
     const percent = (current / total) * 100;
-    progressBar.style.width = `${percent}%`;
-    readwiseBtn.textContent = `Saving ${current}/${total}`;
+    progressBar.style.width = `${percent}% `;
+    readwiseBtn.textContent = `Saving ${current} /${total}`;
   };
 
   updateProgress(0, urls.length);
@@ -446,13 +353,30 @@ async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> 
         tags.push(`name:${playlistData.playlistTitle}`);
       }
 
-      const requestBody = JSON.stringify({
-        url: url,
-        tags: tags,
-        saved_using: 'auto-import',
-        category: 'video'
-      });
-      console.log('Request body:', requestBody);
+      let location = locationDropDown.options[locationDropDown.selectedIndex].value;
+
+      let reqBody;
+      if (playlistData && playlistData.author) {
+        reqBody = {
+          url: url,
+          tags: tags,
+          saved_using: 'auto-import',
+          category: 'video',
+          author: playlistData.author,
+          location: location,
+        };
+      } else {
+        reqBody = {
+          url: url,
+          tags: tags,
+          saved_using: 'auto-import',
+          category: 'video',
+          location: location,
+        };
+      }
+
+      const bodyJson = JSON.stringify(reqBody);
+      console.log('Request body:', bodyJson);
 
       const response = await fetch('https://readwise.io/api/v3/save/', {
         method: 'POST',
@@ -460,7 +384,7 @@ async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> 
           'Authorization': `Token ${token}`,
           'Content-Type': 'application/json'
         },
-        body: requestBody
+        body: bodyJson
       });
 
       console.log(`Response status for ${url}: ${response.status}`);
@@ -525,7 +449,7 @@ async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> 
     errorContainerElement.style.display = 'none';
   } else {
     showStatus(`Sent ${successCount} URLs to Readwise with ${failureCount} failures.`, 'error');
-    
+
     // Display detailed error information
     errorContainerElement.innerHTML = `<strong>Errors (${failureCount}):</strong><br>`;
     errorDetails.forEach((error, i) => {
@@ -533,11 +457,11 @@ async function sendUrlsToReadwise(urls: string[], token: string): Promise<void> 
         errorContainerElement.innerHTML += `${error}<br>`;
       }
     });
-    
+
     if (errorDetails.length > 5) {
       errorContainerElement.innerHTML += `<em>...and ${errorDetails.length - 5} more errors. Check console for details.</em>`;
     }
-    
+
     errorContainerElement.style.display = 'block';
   }
 }

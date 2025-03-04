@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // First, check if API key is configured
   chrome.storage.sync.get(['apiKey'], (result) => {
     console.log("Checking API key:", result.apiKey ? "Found" : "Not found");
-    
+
     if (apiStatusDot && apiStatusText) {
       if (result.apiKey) {
         apiStatusDot.classList.remove('inactive');
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         apiStatusText.textContent = 'API Key: Not configured';
       }
     }
-    
+
     // Then check current tab URL to determine if it's a YouTube playlist
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const currentUrl = tabs[0]?.url || '';
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           saveBtn.disabled = false;
           errorMessage.style.display = 'none';
-          
+
           // Auto-extract when on a playlist page with API key configured
           if (isPlaylist && result.apiKey && currentTab?.id) {
             chrome.scripting.executeScript({
@@ -58,12 +58,14 @@ document.addEventListener('DOMContentLoaded', () => {
               func: extractPlaylistFromPage
             }).then(results => {
               if (results && results[0]?.result) {
-                const videoUrls = results[0].result;
-                
+                // TODO: Show error message if some URL is empty
+                const videos = results[0].result.videos.filter((video: Video) => video.url !== '');
+
                 // Save to storage
                 chrome.storage.local.set({
                   'playlistData': {
-                    videoUrls: videoUrls,
+                    videos: videos,
+                    author: results[0].result.author,
                     playlistTitle: tabs[0]?.title || 'YouTube Playlist',
                     timestamp: new Date().toISOString()
                   }
@@ -84,89 +86,48 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-
-  if (saveBtn) {
-    saveBtn.addEventListener('click', () => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const currentTab = tabs[0];
-        if (currentTab?.id) {
-          chrome.scripting.executeScript({
-            target: { tabId: currentTab.id },
-            func: extractPlaylistFromPage
-          }).then(results => {
-            if (results && results[0]?.result) {
-              const videoUrls = results[0].result;
-              
-              // Save to storage
-              chrome.storage.local.set({
-                'playlistData': {
-                  videoUrls: videoUrls,
-                  playlistTitle: tabs[0]?.title || 'YouTube Playlist',
-                  timestamp: new Date().toISOString()
-                }
-              }, () => {
-                // Open the playlist editor page
-                chrome.tabs.create({
-                  url: 'playlist.html'
-                });
-              });
-            }
-          }).catch(error => {
-            console.error('Error executing script:', error);
-            if (errorMessage) {
-              errorMessage.textContent = 'Error extracting playlist data';
-              errorMessage.style.display = 'block';
-            }
-          });
-        }
-      });
-    });
-  }
 });
 
+
 function extractPlaylistFromPage() {
+  class Result {
+    author: string | null;
+    videos: Video[];
+    constructor(author: string | null, videos: Video[]) {
+      this.author = author;
+      this.videos = videos;
+    }
+  }
+
+  class Video {
+    title: string;
+    url: string;
+    constructor(title: string, url: string) {
+      this.title = title;
+      this.url = url;
+    }
+  }
   function getVideoURLs() {
     const videoElements = document.querySelectorAll('a#video-title');
     let videoUrls = Array.from(videoElements).map(video => {
       try {
         const url = new URL((video as HTMLAnchorElement).href);
+        const title = (video as HTMLAnchorElement).title;
         const videoId = url.searchParams.get('v');
-        return videoId ? `https://www.youtube.com/watch?v=${videoId}` : '';
-      } catch (e) {
-        return '';
-      }
-    }).filter(url => url && url.includes('v='));
-
-    if (videoUrls.length === 0) {
-      const videoElements = document.querySelectorAll('a.yt-simple-endpoint.style-scope.ytd-playlist-video-renderer');
-      videoElements.forEach((element) => {
-        const href = (element as HTMLAnchorElement).href;
-        if (href && href.includes('watch?v=')) {
-          videoUrls.push(href);
+        if (!videoId) {
+          return new Video("", "");
         }
-      });
-
-      if (videoUrls.length === 0) {
-        const watchElements = document.querySelectorAll('a.yt-simple-endpoint.style-scope.ytd-compact-video-renderer');
-        watchElements.forEach((element) => {
-          const href = (element as HTMLAnchorElement).href;
-          if (href && href.includes('watch?v=')) {
-            videoUrls.push(href);
-          }
-        });
+        return new Video(title, `https://www.youtube.com/watch?v=${videoId}`);
+      } catch (e) {
+        return new Video("", "");
       }
+    });
 
-      if (videoUrls.length === 0) {
-        const allLinks = document.querySelectorAll('a');
-        allLinks.forEach((link) => {
-          if (link.href && link.href.includes('youtube.com/watch?v=')) {
-            videoUrls.push(link.href);
-          }
-        });
-      }
-    }
+    // select a tag inside yt-avatar-stack-view-model
+    const authorElement = document.querySelector('yt-formatted-string.ytd-channel-name a');
+    const author = authorElement ? (authorElement as HTMLAnchorElement).text : null;
 
-    return [...new Set(videoUrls)];
+    return new Result(author, [...new Set(videoUrls)]);
   }
 
   return getVideoURLs();
