@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Readwise Reader ImporterBETA",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Import multiple URLs from a page like YouTube playlist to Readwise. THIS EXTENSION IS FOR BETA TESTING.",
   "action": {
     "default_popup": "popup.html",
