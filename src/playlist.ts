@@ -106,47 +106,58 @@ function displayVideoList(): void {
     const videoItem = document.createElement('div');
     videoItem.className = 'video-item';
 
+    const videoItemContainer = document.createElement('div');
+    videoItemContainer.className = 'flex items-center justify-between w-full p-2';
+
+    const linkContainer = document.createElement('div');
+    linkContainer.className = 'flex-grow mr-4';
+
     const link = document.createElement('a');
     link.href = video.url;
     link.textContent = video.title;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
+    linkContainer.appendChild(link);
 
-    videoItem.appendChild(link);
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'flex gap-2';
 
     if (index > 0) {
       const upBtn = document.createElement('button');
       upBtn.textContent = '⬆';
+      upBtn.className = 'px-2';
       upBtn.dataset.index = index.toString();
       upBtn.addEventListener('click', () => {
         [playlistData.videos[index], playlistData.videos[index - 1]] = [playlistData.videos[index - 1], playlistData.videos[index]];
         displayVideoList();
       });
-      videoItem.appendChild(upBtn);
+      buttonsContainer.appendChild(upBtn);
     }
 
     if (index < playlistData.videos.length - 1) {
       const downBtn = document.createElement('button');
       downBtn.textContent = '⬇';
+      downBtn.className = 'px-2';
       downBtn.dataset.index = index.toString();
       downBtn.addEventListener('click', () => {
         [playlistData.videos[index], playlistData.videos[index + 1]] = [playlistData.videos[index + 1], playlistData.videos[index]];
         displayVideoList();
       });
-      videoItem.appendChild(downBtn);
+      buttonsContainer.appendChild(downBtn);
     }
 
     const removeBtn = document.createElement('button');
-    removeBtn.className = 'remove-btn';
+    removeBtn.className = 'remove-btn px-2';
     removeBtn.textContent = 'Remove';
     removeBtn.dataset.index = index.toString();
     removeBtn.addEventListener('click', () => {
       removeVideo(index);
     });
+    buttonsContainer.appendChild(removeBtn);
 
-    videoItem.appendChild(removeBtn);
-
-    videoListElement.appendChild(videoItem);
+    videoItemContainer.appendChild(linkContainer);
+    videoItemContainer.appendChild(buttonsContainer);
+    videoListElement.appendChild(videoItemContainer);
   });
 }
 
@@ -281,15 +292,25 @@ function setupEventListeners(): void {
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tabContents.forEach(c => c.classList.remove('active'));
+      // Remove active classes from all tabs and contents
+      tabs.forEach(t => {
+        t.classList.remove('border-readwise', 'text-readwise', 'font-medium');
+        t.classList.add('border-transparent', 'text-gray-500');
+      });
 
-      tab.classList.add('active');
+      tabContents.forEach(c => {
+        c.classList.add('hidden');
+      });
+
+      // Add active classes to selected tab and content
+      tab.classList.add('border-readwise', 'text-readwise', 'font-medium');
+      tab.classList.remove('border-transparent', 'text-gray-500');
+
       const tabId = tab.getAttribute('data-tab');
       if (tabId) {
         const content = document.getElementById(tabId);
         if (content) {
-          content.classList.add('active');
+          content.classList.remove('hidden');
         }
       }
     });
@@ -306,17 +327,17 @@ async function sendUrlsToReadwise(playlistData: PlaylistData, token: string): Pr
   const readwiseBtn = document.getElementById('save-to-readwise-btn') as HTMLButtonElement;
   const originalBtnText = readwiseBtn.textContent || 'Save to Readwise';
 
-  let progressBar = readwiseBtn.querySelector('.progress-bar') as HTMLDivElement;
+  let progressBar = readwiseBtn.querySelector('.absolute') as HTMLDivElement;
   if (!progressBar) {
     progressBar = document.createElement('div');
-    progressBar.className = 'progress-bar';
+    progressBar.className = 'absolute left-0 bottom-0 h-1 bg-blue-500 w-0 transition-all duration-300';
     readwiseBtn.appendChild(progressBar);
   }
 
   let loadingText = readwiseBtn.querySelector('.loading-text') as HTMLSpanElement;
   if (!loadingText) {
     loadingText = document.createElement('span');
-    loadingText.className = 'loading-text';
+    loadingText.className = 'hidden';
     readwiseBtn.appendChild(loadingText);
   }
 
@@ -325,9 +346,7 @@ async function sendUrlsToReadwise(playlistData: PlaylistData, token: string): Pr
   if (!errorContainer) {
     errorContainer = document.createElement('div');
     errorContainer.id = 'readwise-error-container';
-    errorContainer.style.color = 'red';
-    errorContainer.style.marginTop = '10px';
-    errorContainer.style.display = 'none';
+    errorContainer.className = 'mt-4 p-3 bg-red-100 text-red-700 rounded-md hidden';
     readwiseBtn.parentNode?.insertBefore(errorContainer, readwiseBtn.nextSibling);
   }
 
@@ -338,8 +357,8 @@ async function sendUrlsToReadwise(playlistData: PlaylistData, token: string): Pr
 
   const updateProgress = (current: number, total: number) => {
     const percent = (current / total) * 100;
-    progressBar.style.width = `${percent}% `;
-    readwiseBtn.textContent = `Saving ${current} /${total}`;
+    progressBar.style.width = `${percent}%`;
+    readwiseBtn.textContent = `Saving ${current}/${total}`;
   };
 
   updateProgress(0, urls.length);
@@ -446,7 +465,7 @@ async function sendUrlsToReadwise(playlistData: PlaylistData, token: string): Pr
 
   if (failureCount === 0) {
     showStatus(`Successfully sent all ${successCount} URLs to Readwise!`, 'success');
-    errorContainerElement.style.display = 'none';
+    errorContainerElement.classList.add('hidden');
   } else {
     showStatus(`Sent ${successCount} URLs to Readwise with ${failureCount} failures.`, 'error');
 
@@ -462,7 +481,7 @@ async function sendUrlsToReadwise(playlistData: PlaylistData, token: string): Pr
       errorContainerElement.innerHTML += `<em>...and ${errorDetails.length - 5} more errors. Check console for details.</em>`;
     }
 
-    errorContainerElement.style.display = 'block';
+    errorContainerElement.classList.remove('hidden');
   }
 }
 
@@ -474,11 +493,17 @@ function showStatus(message: string, type: 'success' | 'error'): void {
   }
 
   statusMessage.textContent = message;
-  statusMessage.className = `status ${type}`;
-  statusMessage.style.display = 'block';
+
+  if (type === 'success') {
+    statusMessage.className = 'mt-4 p-3 bg-green-100 text-green-700 rounded-md';
+  } else {
+    statusMessage.className = 'mt-4 p-3 bg-red-100 text-red-700 rounded-md';
+  }
+
+  statusMessage.classList.remove('hidden');
 
   setTimeout(() => {
-    statusMessage.style.display = 'none';
+    statusMessage.classList.add('hidden');
   }, 5000);
 }
 

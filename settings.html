@@ -1,79 +1,34 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8" />
-        <title>Extension Settings</title>
-        <link rel="stylesheet" href="styles.css" />
-        <style>
-      .settings-container {
-        max-width: 500px;
-        margin: 0 auto;
-        padding: 20px;
-      }
 
-      .form-group {
-        margin-bottom: 15px;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>Extension Settings</title>
+  <link href="output.css" rel="stylesheet">
+</head>
 
-      label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-      }
+<body class="bg-gray-50">
+  <div class="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md my-8">
+    <h1 class="text-2xl font-bold text-readwise mb-4">Extension Settings</h1>
+    <p class="text-gray-600 mb-6">
+      Enter your Readwise API key below. You can get your API key from
+      <a href="https://readwise.io/access_token" target="_blank"
+        class="text-readwise hover:underline font-bold border-b-2 border-readwise">here</a>.
+    </p>
+    <form id="settings-form" class="space-y-4">
+      <div class="space-y-2">
+        <label for="api-key" class="block text-sm font-medium text-gray-700">API Key:</label>
+        <input type="password" id="api-key" placeholder="Enter your API key"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-readwise focus:border-readwise" />
+      </div>
+      <button type="submit"
+        class="w-full py-2 px-4 bg-readwise text-white rounded-md hover:bg-readwise-light transition duration-200 focus:outline-none focus:ring-2 focus:ring-readwise focus:ring-opacity-50">
+        Save Settings
+      </button>
+    </form>
+    <div id="status-message" class="mt-4 p-3 rounded-md hidden"></div>
+  </div>
+  <script src="dist/settings.js"></script>
+</body>
 
-      input[type="text"] {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-      }
-
-      .btn {
-        background-color: #4285f4;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-
-      .btn:hover {
-        background-color: #3367d6;
-      }
-
-      .status-message {
-        margin-top: 15px;
-        padding: 10px;
-        border-radius: 4px;
-      }
-
-      .success {
-        background-color: #d4edda;
-        color: #155724;
-      }
-
-      .error {
-        background-color: #f8d7da;
-        color: #721c24;
-      }
-        </style>
-    </head>
-    <body>
-        <div class="settings-container">
-            <h1>Extension Settings</h1>
-            <p>
-                Enter your Readwise API key below. You can get your API key from
-                <a target="_blank" href="https://readwise.io/access_token">here</a>.
-            </p>
-            <form id="settings-form">
-                <div class="form-group">
-                    <label for="api-key">API Key:</label>
-                    <input type="password" id="api-key" placeholder="Enter your API key" />
-                </div>
-                <button type="submit" class="btn">Save Settings</button>
-            </form>
-            <div id="status-message" class="status-message" style="display: none"></div>
-        </div>
-        <script src="dist/settings.js"></script>
-    </body>
 </html>

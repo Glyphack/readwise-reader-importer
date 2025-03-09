@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
   const apiStatusDot = document.getElementById('api-status-dot');
   const apiStatusText = document.getElementById('api-status-text');
-  const errorMessage = document.getElementById('error-message');
+  const errorMessage = document.getElementById('error-message') as HTMLDivElement;
   const bugReportBtn = document.getElementById('bug-report-btn');
 
   function isYouTubePlaylist(url: string): boolean {
@@ -31,12 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (apiStatusDot && apiStatusText) {
       if (result.apiKey) {
-        apiStatusDot.classList.remove('inactive');
-        apiStatusDot.classList.add('active');
+        apiStatusDot.classList.remove('bg-red-500');
+        apiStatusDot.classList.add('bg-green-500');
         apiStatusText.textContent = 'API Key: Configured';
       } else {
-        apiStatusDot.classList.remove('active');
-        apiStatusDot.classList.add('inactive');
+        apiStatusDot.classList.remove('bg-green-500');
+        apiStatusDot.classList.add('bg-red-500');
         apiStatusText.textContent = 'API Key: Not configured';
       }
     }
@@ -47,27 +47,47 @@ document.addEventListener('DOMContentLoaded', () => {
       const isPlaylist = isYouTubePlaylist(currentUrl);
       const currentTab = tabs[0];
 
-      if (saveBtn && errorMessage) {
+      if (errorMessage) {
         if (!isPlaylist) {
-          saveBtn.disabled = true;
+          if (saveBtn) saveBtn.disabled = true;
           errorMessage.textContent = 'Not on a YouTube playlist page';
-          errorMessage.style.display = 'block';
+          errorMessage.classList.remove('hidden');
         } else if (!result.apiKey) {
-          saveBtn.disabled = true;
+          if (saveBtn) saveBtn.disabled = true;
           errorMessage.textContent = 'Please configure your API key in settings';
-          errorMessage.style.display = 'block';
+          errorMessage.classList.remove('hidden');
         } else {
-          saveBtn.disabled = false;
-          errorMessage.style.display = 'none';
+          if (saveBtn) saveBtn.disabled = false;
+          errorMessage.classList.add('hidden');
+        }
+      }
 
-          // Auto-extract when on a playlist page with API key configured
-          if (isPlaylist && result.apiKey && currentTab?.id) {
+      // Add click event listener for the save button
+      if (saveBtn && errorMessage) {
+        saveBtn.addEventListener('click', () => {
+          if (!isPlaylist) {
+            errorMessage.textContent = 'Not on a YouTube playlist page';
+            errorMessage.classList.remove('hidden');
+            return;
+          }
+
+          if (!result.apiKey) {
+            errorMessage.textContent = 'Please configure your API key in settings';
+            errorMessage.classList.remove('hidden');
+            return;
+          }
+
+          if (currentTab?.id) {
+            // Show loading state
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Extracting...';
+
             chrome.scripting.executeScript({
               target: { tabId: currentTab.id },
               func: extractPlaylistFromPage
             }).then(results => {
               if (results && results[0]?.result) {
-                // TODO: Show error message if some URL is empty
+                // Filter out empty URLs
                 const videos = results[0].result.videos.filter((video: Video) => video.url !== '');
 
                 // Save to storage
@@ -87,11 +107,15 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }).catch(error => {
               console.error('Error executing script:', error);
-              errorMessage.textContent = 'Error extracting playlist data';
-              errorMessage.style.display = 'block';
+              if (errorMessage) {
+                errorMessage.textContent = 'Error extracting playlist data';
+                errorMessage.classList.remove('hidden');
+              }
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Extract Playlist';
             });
           }
-        }
+        });
       }
     });
   });

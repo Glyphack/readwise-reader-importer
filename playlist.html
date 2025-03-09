@@ -1,246 +1,74 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Extracted Links</title>
-    <link rel="stylesheet" href="styles.css" />
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 20px;
-        background-color: #f9f9f9;
-        width: 100%;
-        box-sizing: border-box;
-      }
 
-      .container {
-        width: 90%;
-        max-width: 1800px;
-        margin: 0 auto;
-        background-color: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extracted Links</title>
+  <link href="output.css" rel="stylesheet">
+</head>
 
-      h1 {
-        color: #cc0000;
-        margin-top: 0;
-      }
+<body class="bg-gray-50">
+  <div class="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow-md my-8">
+    <h1 class="text-3xl font-bold text-readwise mb-4">Save Links to Readwise</h1>
 
-      .info {
-        margin-bottom: 20px;
-        color: #666;
-      }
+    <div class="mb-6 text-gray-600">
+      <p>The following links were extracted from the page. You can check the links and when you are ready hit the Save
+        button.</p>
+    </div>
 
-      .actions {
-        margin-bottom: 20px;
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
+    <div class="mb-6 bg-readwise-50 p-4 rounded-md">
+      <p id="playlist-info" class="text-gray-700">Loading playlist information...</p>
+    </div>
 
-      button {
-        padding: 8px 16px;
-        background-color: #cc0000;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: bold;
-      }
-
-      button:hover {
-        background-color: #990000;
-      }
-
-      button.secondary {
-        background-color: #666;
-      }
-
-      button.secondary:hover {
-        background-color: #444;
-      }
-
-      button {
-        padding: 8px 16px;
-        background-color: #4285f4;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: bold;
-      }
-
-      button:hover {
-        background-color: #3367d6;
-      }
-
-      button.secondary {
-        background-color: #666;
-      }
-
-      button.secondary:hover {
-        background-color: #444;
-      }
-
-      button.readwise {
-        background-color: #000000;
-        color: white;
-        position: relative;
-        overflow: hidden;
-      }
-
-      button.readwise:hover {
-        background-color: #333333;
-      }
-
-      .progress-bar {
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        height: 4px;
-        background-color: #4285f4;
-        width: 0%;
-        transition: width 0.3s ease;
-      }
-
-      .loading-text {
-        display: none;
-      }
-
-      textarea {
-        width: 100%;
-        height: 1200px;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-family: monospace;
-        font-size: 14px;
-        resize: vertical;
-      }
-
-      .status {
-        margin-top: 10px;
-        padding: 10px;
-        border-radius: 4px;
-      }
-
-      .success {
-        background-color: #e6ffe6;
-        color: #006600;
-      }
-
-      .error {
-        background-color: #ffe6e6;
-        color: #cc0000;
-      }
-
-      .video-list {
-        margin-top: 20px;
-      }
-
-      .video-item {
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        border-bottom: 1px solid #eee;
-      }
-
-      .video-item:hover {
-        background-color: #f5f5f5;
-      }
-
-      .video-item a {
-        color: #0066cc;
-        text-decoration: none;
-        flex-grow: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .video-item a:hover {
-        text-decoration: underline;
-      }
-
-      .video-item .remove-btn {
-        margin-left: 10px;
-        padding: 2px 6px;
-        background-color: #cc0000;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-      }
-
-      .tabs {
-        display: flex;
-        margin-bottom: 20px;
-        border-bottom: 1px solid #ddd;
-      }
-
-      .tab {
-        padding: 10px 20px;
-        cursor: pointer;
-        border-bottom: 3px solid transparent;
-      }
-
-      .tab.active {
-        border-bottom-color: #cc0000;
-        font-weight: bold;
-      }
-
-      .tab-content {
-        display: none;
-      }
-
-      .tab-content.active {
-        display: block;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Save Links to Readwise</h1>
-      <div class="info">
-        <p>
-          The following links where extracted from the page. You can check the
-          links and when you are ready hit the Save button.
-        </p>
-      </div>
-      <div class="info">
-        <p id="playlist-info">Loading playlist information...</p>
-      </div>
-      <div class="tabs">
-        <div class="tab active" data-tab="list-view">List View</div>
-      </div>
-      <div class="tab-content active" id="list-view">
-        <div class="actions">
-          <button id="copy-all-btn">Copy All URLs</button>
-          <button id="download-btn">Download as Text</button>
-          <button id="open-all-btn" class="secondary">
-            Open All (Warning: Opens many tabs)
-          </button>
-          <label for="location">Save to:</label>
-          <select id="location">
-              <option value="new" selected>New</option>
-              <option value="later">Later</option>
-              <option value="archive">Archive</option>
-              <option value="feed">Feed</option>
-          </select>
-          <button id="save-to-readwise-btn" class="readwise">
-            Save to Readwise
-          </button>
-        </div>
-        <div class="video-list" id="video-list">
-          <p>Loading videos...</p>
-        </div>
+    <div class="border-b border-gray-200 mb-6">
+      <div class="flex">
+        <button class="px-4 py-2 border-b-2 border-readwise text-readwise font-medium" data-tab="list-view">List
+          View</button>
       </div>
     </div>
-    <script src="dist/playlist.js"></script>
-  </body>
+
+    <div class="tab-content active" id="list-view">
+      <div class="flex flex-wrap gap-3 mb-6">
+        <button id="copy-all-btn"
+          class="px-4 py-2 bg-readwise text-white rounded-md hover:bg-readwise-light transition duration-200">
+          Copy All URLs
+        </button>
+
+        <button id="download-btn"
+          class="px-4 py-2 bg-readwise text-white rounded-md hover:bg-readwise-light transition duration-200">
+          Download as Text
+        </button>
+
+        <button id="open-all-btn"
+          class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-200">
+          Open All (Warning: Opens many tabs)
+        </button>
+
+        <div class="flex items-center">
+          <label for="location" class="mr-2 text-gray-700">Save to:</label>
+          <select id="location"
+            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-readwise focus:border-readwise">
+            <option value="new" selected>New</option>
+            <option value="later">Later</option>
+            <option value="archive">Archive</option>
+            <option value="feed">Feed</option>
+          </select>
+        </div>
+
+        <button id="save-to-readwise-btn"
+          class="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition duration-200 relative overflow-hidden">
+          Save to Readwise
+          <div class="absolute left-0 bottom-0 h-1 bg-blue-500 w-0 transition-all duration-300"></div>
+        </button>
+      </div>
+
+      <div class="video-list" id="video-list">
+        <p class="text-gray-600">Loading videos...</p>
+      </div>
+    </div>
+  </div>
+  <script src="dist/playlist.js"></script>
+</body>
+
 </html>

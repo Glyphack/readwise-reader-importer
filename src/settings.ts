@@ -26,11 +26,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showStatus(message: string, type: 'success' | 'error'): void {
     statusMessage.textContent = message;
-    statusMessage.className = 'status-message ' + type;
-    statusMessage.style.display = 'block';
+
+    if (type === 'success') {
+      statusMessage.className = 'mt-4 p-3 bg-green-100 text-green-700 rounded-md';
+    } else {
+      statusMessage.className = 'mt-4 p-3 bg-red-100 text-red-700 rounded-md';
+    }
+
+    statusMessage.classList.remove('hidden');
 
     setTimeout(() => {
-      statusMessage.style.display = 'none';
+      statusMessage.classList.add('hidden');
     }, 3000);
   }
 });

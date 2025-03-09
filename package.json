@@ -3,14 +3,19 @@
   "version": "1.0.0",
   "description": "A Chrome extension to import content to Readwise reader",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run tailwind",
+    "tailwind": "tailwindcss -i ./input.css -o ./output.css",
     "watch": "tsc --watch",
+    "watch:tailwind": "tailwindcss -i ./input.css -o ./output.css --watch",
+    "dev": "concurrently \"npm run watch\" \"npm run watch:tailwind\"",
     "clean": "rm -rf dist",
     "package": "npm run build && npm run zip",
-    "zip": "mkdir -p dist && zip -r dist/readwise-reader-importer.zip manifest.json images dist/*.js *.html *.css"
+    "zip": "mkdir -p dist && zip -r dist/readwise-reader-importer.zip manifest.json images dist/*.js *.html output.css"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.306",
+    "concurrently": "^8.2.2",
+    "tailwindcss": "^3.4.17",
     "typescript": "^4.9.5"
   }
 }
