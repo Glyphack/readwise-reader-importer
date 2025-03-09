@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const apiStatusDot = document.getElementById('api-status-dot');
   const apiStatusText = document.getElementById('api-status-text');
   const errorMessage = document.getElementById('error-message');
+  const bugReportBtn = document.getElementById('bug-report-btn');
 
   function isYouTubePlaylist(url: string): boolean {
     return url.includes('youtube.com/playlist') ||
@@ -13,6 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (settingsBtn) {
     settingsBtn.addEventListener('click', () => {
       chrome.runtime.openOptionsPage();
+    });
+  }
+
+  if (bugReportBtn) {
+    bugReportBtn.addEventListener('click', () => {
+      chrome.tabs.create({
+        url: 'https://github.com/Glyphack/readwise-reader-importer/issues/new/choose'
+      });
     });
   }
 

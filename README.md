@@ -4,9 +4,13 @@ A Chrome extension to save multiple links like YouTube playlists to [Readwise re
 
 ## Features
 
-- Extract video URLs from YouTube playlists
-- Edit and manage extracted playlists
-- Copy, download, and open playlist URLs
+- Extract URLs from YouTube playlists
+- Edit extracted playlists
+- Import URLs to Readwise.
+- Supported Sources
+   - [x] Youtube
+   - [ ] Blog Archives
+   - Submit your ideas.
 
 ## Development
 
@@ -22,7 +26,7 @@ A Chrome extension to save multiple links like YouTube playlists to [Readwise re
    npm run build
    ```
 
-3. For continuous development:
+3. (Optional) For continuous development:
 
    ```
    npm run watch
