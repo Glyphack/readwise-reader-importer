@@ -2,6 +2,11 @@
 
 A Chrome extension to save multiple links like YouTube playlists to [Readwise reader](https://readwise.io/read) with one click.
 
+## Install
+
+[link-chrome]: https://chromewebstore.google.com/detail/readwise-reader-importer/biaidjfcmkeeiidenndhkdaldkljaipi 'Version published on Chrome Web Store'
+[<img src="https://raw.githubusercontent.com/alrra/browser-logos/90fdf03c/src/chrome/chrome.svg" width="48" alt="Chrome" valign="middle">][link-chrome] [<img valign="middle" src="https://img.shields.io/chrome-web-store/v/hlepfoohegkhhmjieoechaddaejaokhf.svg?label=%20">][link-chrome] and other Chromium browsers
+
 ## Features
 
 - Extract URLs from YouTube playlists
